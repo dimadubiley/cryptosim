@@ -1,0 +1,621 @@
+/* ─── CryptoSim Design System ─────────────────────────────────────────────── */
+
+:root {
+  --bg: #050508;
+  --bg2: #0a0a0f;
+  --bg3: #111118;
+  --border: #1e1e2e;
+  --text: #e8e8f0;
+  --text2: #8888aa;
+  --text3: #444466;
+  --up: #00d4aa;
+  --down: #ff4466;
+  --flat: #ffd166;
+  --accent: #6c63ff;
+  --font-head: 'Syne', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── Navbar ─────────────────────────────────────────────────────────────── */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  height: 56px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--text);
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: 0.1em;
+}
+
+.logo-icon { color: var(--accent); font-size: 1.3rem; }
+
+.nav-links { display: flex; gap: 0; }
+
+.nav-link {
+  text-decoration: none;
+  color: var(--text2);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  padding: 0 1rem;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.nav-link:hover { color: var(--text); border-bottom-color: currentColor; }
+.ex1-link:hover { color: #00d4aa; }
+.ex2-link:hover { color: #ff6b35; }
+.ex3-link:hover { color: #c77dff; }
+.profile-link:hover { color: var(--accent); }
+
+.nav-wallet {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 12px;
+}
+.wallet-label { font-size: 0.65rem; color: var(--text3); letter-spacing: 0.1em; }
+.wallet-amount { font-size: 0.85rem; color: var(--up); font-weight: 700; }
+
+/* ─── Home Hero ──────────────────────────────────────────────────────────── */
+.home-hero {
+  position: relative;
+  padding: 5rem 2rem 3rem;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+}
+
+.hero-bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.4;
+  mask-image: radial-gradient(ellipse at 50% 0%, black 30%, transparent 80%);
+}
+
+.hero-content { position: relative; max-width: 900px; }
+
+.hero-eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  margin-bottom: 1.5rem;
+}
+
+.hero-title {
+  font-family: var(--font-head);
+  font-weight: 800;
+  line-height: 0.9;
+  margin-bottom: 1.5rem;
+}
+.title-line1 {
+  display: block;
+  font-size: clamp(4rem, 12vw, 9rem);
+  color: transparent;
+  -webkit-text-stroke: 1px var(--text3);
+  letter-spacing: -0.02em;
+}
+.title-line2 {
+  display: block;
+  font-size: clamp(4rem, 12vw, 9rem);
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.hero-desc {
+  max-width: 520px;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: var(--text2);
+  margin-bottom: 2rem;
+}
+
+.hero-stats { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+.stat-pill {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stat-label { font-size: 0.6rem; letter-spacing: 0.15em; color: var(--text3); }
+.stat-val { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.stat-val.up { color: var(--up); }
+.stat-val.down { color: var(--down); }
+
+/* ─── Exchange Cards ─────────────────────────────────────────────────────── */
+.exchanges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.exchange-card {
+  position: relative;
+  background: var(--bg2);
+  padding: 2rem;
+  text-decoration: none;
+  color: var(--text);
+  overflow: hidden;
+  transition: background 0.3s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.exchange-card:hover { background: var(--bg3); }
+.exchange-card:hover .card-glow { opacity: 1; }
+
+.card-glow {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--ex-color);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.card-header { display: flex; justify-content: space-between; align-items: center; }
+.card-badge {
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  color: var(--ex-color);
+  background: color-mix(in srgb, var(--ex-color) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ex-color) 30%, transparent);
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+.card-region { font-size: 0.65rem; color: var(--text3); }
+.card-name { font-family: var(--font-head); font-size: 1.6rem; font-weight: 800; margin-top: 0.5rem; }
+.card-coin { font-size: 0.7rem; letter-spacing: 0.2em; color: var(--ex-color); }
+
+.card-price-wrap { display: flex; align-items: baseline; gap: 1rem; margin: 0.5rem 0; }
+.card-price { font-size: 1.3rem; font-weight: 700; }
+.card-change { font-size: 0.75rem; }
+.card-change.up { color: var(--up); }
+.card-change.down { color: var(--down); }
+.card-change.flat { color: var(--flat); }
+
+.card-desc { font-size: 0.7rem; color: var(--text2); line-height: 1.5; }
+
+.mini-chart-wrap { margin: 0.5rem 0; }
+.mini-chart { width: 100%; height: 60px; }
+
+.card-cta {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--ex-color);
+  margin-top: auto;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.exchange-card:hover .card-cta { opacity: 1; }
+
+/* ─── How To Play ────────────────────────────────────────────────────────── */
+.how-section {
+  padding: 4rem 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.how-title {
+  font-family: var(--font-head);
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  color: var(--text3);
+  margin-bottom: 2rem;
+}
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+}
+.how-item { display: flex; flex-direction: column; gap: 0.75rem; }
+.how-num {
+  font-family: var(--font-head);
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--border);
+  line-height: 1;
+}
+.how-text { font-size: 0.75rem; color: var(--text2); line-height: 1.6; }
+
+/* ─── Exchange Page ──────────────────────────────────────────────────────── */
+.exchange-page { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+
+.ex-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.ex-badge {
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  color: var(--ex-color);
+  margin-bottom: 0.5rem;
+}
+.ex-name {
+  font-family: var(--font-head);
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--ex-color);
+  line-height: 1;
+}
+.ex-desc { font-size: 0.72rem; color: var(--text2); margin-top: 0.5rem; }
+
+.ex-prices { display: flex; gap: 2rem; flex-wrap: wrap; }
+.price-block { display: flex; flex-direction: column; gap: 4px; }
+.price-label { font-size: 0.6rem; letter-spacing: 0.15em; color: var(--text3); }
+.price-value { font-size: 1.4rem; font-weight: 700; font-family: var(--font-mono); }
+.price-value.small { font-size: 1rem; }
+.price-change { font-size: 0.8rem; font-weight: 700; }
+.price-change.up { color: var(--up); }
+.price-change.down { color: var(--down); }
+.price-change.flat { color: var(--flat); }
+
+/* ─── Event Banner ───────────────────────────────────────────────────────── */
+.event-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: color-mix(in srgb, var(--flat) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--flat) 30%, transparent);
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin-bottom: 1.5rem;
+  animation: pulse-border 1s ease-in-out infinite;
+}
+@keyframes pulse-border {
+  0%, 100% { border-color: color-mix(in srgb, var(--flat) 30%, transparent); }
+  50% { border-color: var(--flat); }
+}
+.event-icon { font-size: 1.1rem; }
+#event-text { font-size: 0.78rem; letter-spacing: 0.05em; color: var(--flat); flex: 1; }
+.event-bar { width: 80px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.event-bar-fill { height: 100%; background: var(--flat); transition: width 0.3s; border-radius: 2px; }
+
+/* ─── Chart ──────────────────────────────────────────────────────────────── */
+.chart-container {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+.chart-labels {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: absolute;
+  top: 12px; bottom: 32px; left: 8px;
+  font-size: 0.6rem;
+  color: var(--text3);
+  pointer-events: none;
+}
+#main-chart { width: 100%; height: 280px; display: block; padding-left: 60px; }
+.chart-timeline {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6rem;
+  color: var(--text3);
+  padding: 4px 4px 0;
+}
+
+/* ─── Trade Grid ─────────────────────────────────────────────────────────── */
+.trade-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.trade-panel {
+  background: var(--bg2);
+  padding: 1.5rem;
+}
+
+.panel-title {
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  color: var(--text3);
+  margin-bottom: 1.2rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.position-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.72rem;
+  color: var(--text2);
+}
+.pos-val { color: var(--text); font-weight: 700; }
+
+.trade-input-group { margin-bottom: 0.75rem; }
+.trade-input-group label { display: block; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--text3); margin-bottom: 6px; }
+.trade-input-group input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.trade-input-group input:focus { border-color: var(--ex-color, var(--accent)); }
+
+.quick-amounts { display: flex; gap: 6px; margin-bottom: 0.75rem; }
+.quick-amounts button {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 6px 4px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+.quick-amounts button:hover { background: var(--border); color: var(--text); }
+
+.trade-est { font-size: 0.7rem; color: var(--text3); margin-bottom: 0.75rem; }
+
+.trade-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.buy-btn { background: var(--up); color: var(--bg); }
+.buy-btn:hover { background: #00f0c0; transform: translateY(-1px); }
+.sell-btn { background: var(--down); color: var(--text); }
+.sell-btn:hover { background: #ff6680; transform: translateY(-1px); }
+
+/* ─── Toast ──────────────────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  opacity: 0;
+  transition: all 0.3s;
+  z-index: 999;
+  white-space: nowrap;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.toast.buy { border-color: var(--up); color: var(--up); }
+.toast.sell { border-color: var(--down); color: var(--down); }
+.toast.error { border-color: var(--down); color: var(--down); }
+
+/* ─── Profile Page ───────────────────────────────────────────────────────── */
+.profile-page { padding: 2rem; max-width: 1100px; margin: 0 auto; }
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2rem;
+}
+
+.profile-avatar {
+  font-size: 3rem;
+  color: var(--accent);
+  width: 80px;
+  height: 80px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-eyebrow { font-size: 0.6rem; letter-spacing: 0.2em; color: var(--text3); margin-bottom: 4px; }
+.profile-name { font-family: var(--font-head); font-size: 2rem; font-weight: 800; }
+.profile-since { font-size: 0.7rem; color: var(--text3); margin-top: 4px; }
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+}
+
+.stat-card {
+  background: var(--bg2);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stat-card-label { font-size: 0.6rem; letter-spacing: 0.15em; color: var(--text3); }
+.stat-card-val { font-size: 1.4rem; font-weight: 700; }
+.stat-card-val.up { color: var(--up); }
+.stat-card-val.down { color: var(--down); }
+
+.section-title {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: var(--text3);
+  margin-bottom: 1rem;
+}
+
+.holdings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+}
+
+.holding-card {
+  background: var(--bg2);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 2px solid var(--ex-color);
+}
+.holding-header { display: flex; justify-content: space-between; align-items: center; }
+.holding-name { font-family: var(--font-head); font-size: 1rem; font-weight: 700; }
+.holding-coin { font-size: 0.65rem; letter-spacing: 0.12em; color: var(--ex-color); }
+.holding-qty { font-size: 1rem; font-weight: 700; color: var(--text); }
+.holding-usd { font-size: 1.2rem; font-weight: 700; color: var(--up); }
+.holding-price { font-size: 0.65rem; color: var(--text3); }
+.holding-trade-btn {
+  margin-top: auto;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--ex-color);
+  text-decoration: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.holding-trade-btn:hover { opacity: 1; }
+
+.trade-history-wrap {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.trade-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+.trade-table th {
+  background: var(--bg3);
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  color: var(--text3);
+  border-bottom: 1px solid var(--border);
+}
+.trade-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+}
+.trade-row:last-child td { border-bottom: none; }
+.trade-row:hover td { background: var(--bg3); }
+.trade-row.buy td { background: color-mix(in srgb, var(--up) 3%, transparent); }
+.trade-row.sell td { background: color-mix(in srgb, var(--down) 3%, transparent); }
+.action-cell.buy { color: var(--up); font-weight: 700; }
+.action-cell.sell { color: var(--down); font-weight: 700; }
+.no-trades { text-align: center; color: var(--text3); padding: 2rem !important; }
+.mono { font-family: var(--font-mono); }
+
+.reset-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg2);
+}
+.reset-btn {
+  background: var(--bg3);
+  border: 1px solid var(--down);
+  color: var(--down);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 3px;
+  letter-spacing: 0.08em;
+  transition: all 0.2s;
+}
+.reset-btn:hover { background: var(--down); color: var(--bg); }
+.reset-note { font-size: 0.65rem; color: var(--text3); }
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .trade-grid { grid-template-columns: 1fr; }
+  .ex-header { flex-direction: column; }
+  .ex-prices { flex-direction: column; gap: 1rem; }
+  .nav-links { display: none; }
+  #main-chart { padding-left: 0; }
+}

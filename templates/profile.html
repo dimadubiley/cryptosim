@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Profile — CryptoSim{% endblock %}
+{% block content %}
+
+<div class="profile-page">
+  <div class="profile-header">
+    <div class="profile-avatar">◉</div>
+    <div class="profile-info">
+      <div class="profile-eyebrow">TRADER PROFILE</div>
+      <h1 class="profile-name">Anonymous Trader</h1>
+      <div class="profile-since">Playing since session start</div>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-card-label">USD BALANCE</div>
+      <div class="stat-card-val" id="p-wallet">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">PORTFOLIO VALUE</div>
+      <div class="stat-card-val" id="p-portfolio">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">TOTAL P&amp;L</div>
+      <div class="stat-card-val" id="p-pnl">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">RETURN</div>
+      <div class="stat-card-val" id="p-return">—</div>
+    </div>
+  </div>
+
+  <!-- Holdings -->
+  <div class="section-title">CURRENT HOLDINGS</div>
+  <div class="holdings-grid" id="holdings-grid">
+    {% for eid, ex in exchanges.items() %}
+    <div class="holding-card" style="--ex-color: {{ ex.color }}">
+      <div class="holding-header">
+        <span class="holding-name">{{ ex.name }}</span>
+        <span class="holding-coin">{{ ex.coin }}</span>
+      </div>
+      <div class="holding-qty" id="h-qty-{{ eid }}">0.00000000</div>
+      <div class="holding-usd" id="h-usd-{{ eid }}">$0.00</div>
+      <div class="holding-price">@ <span id="h-price-{{ eid }}">—</span></div>
+      <a href="/exchange/{{ eid }}" class="holding-trade-btn">TRADE →</a>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Trade History -->
+  <div class="section-title">TRADE HISTORY</div>
+  <div class="trade-history-wrap">
+    <table class="trade-table">
+      <thead>
+        <tr>
+          <th>TIME</th>
+          <th>EXCHANGE</th>
+          <th>ACTION</th>
+          <th>AMOUNT USD</th>
+          <th>PRICE</th>
+          <th>QTY</th>
+        </tr>
+      </thead>
+      <tbody id="trade-tbody">
+        <tr><td colspan="6" class="no-trades">No trades yet — head to an exchange!</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Reset button -->
+  <div class="reset-section">
+    <button class="reset-btn" onclick="confirmReset()">⟳ RESET GAME</button>
+    <span class="reset-note">Resets balance to $100 and clears all history</span>
+  </div>
+</div>
+
+<script>
+const EXCHANGES = {
+  {% for eid, ex in exchanges.items() %}
+  '{{ eid }}': { name: '{{ ex.name }}', coin: '{{ ex.coin }}', color: '{{ ex.color }}' },
+  {% endfor %}
+};
+
+async function profileUpdate() {
+  const [tick, state] = await Promise.all([
+    fetch('/api/tick').then(r => r.json()),
+    fetch('/api/state').then(r => r.json())
+  ]);
+
+  document.getElementById('nav-wallet').textContent = '$' + state.wallet.toFixed(2);
+  document.getElementById('p-wallet').textContent = '$' + state.wallet.toFixed(4);
+  document.getElementById('p-portfolio').textContent = '$' + state.portfolio_value.toFixed(4);
+
+  const pnl = state.portfolio_value - 100;
+  const ret = ((state.portfolio_value / 100 - 1) * 100).toFixed(2);
+  const pnlEl = document.getElementById('p-pnl');
+  const retEl = document.getElementById('p-return');
+  pnlEl.textContent = (pnl >= 0 ? '+$' : '-$') + Math.abs(pnl).toFixed(4);
+  pnlEl.className = 'stat-card-val ' + (pnl > 0 ? 'up' : pnl < 0 ? 'down' : '');
+  retEl.textContent = (pnl >= 0 ? '+' : '') + ret + '%';
+  retEl.className = 'stat-card-val ' + (pnl > 0 ? 'up' : pnl < 0 ? 'down' : '');
+
+  // Holdings
+  for (const [eid, ex] of Object.entries(EXCHANGES)) {
+    const qty = state.holdings[eid] || 0;
+    const price = tick.markets[eid].price;
+    const val = qty * price;
+    document.getElementById('h-qty-' + eid).textContent = qty.toFixed(8) + ' ' + ex.coin;
+    document.getElementById('h-usd-' + eid).textContent = '$' + val.toFixed(4);
+    document.getElementById('h-price-' + eid).textContent = '$' + price.toFixed(6);
+  }
+
+  // Trade history
+  const tbody = document.getElementById('trade-tbody');
+  if (state.trade_history.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="no-trades">No trades yet — head to an exchange!</td></tr>';
+  } else {
+    const rows = [...state.trade_history].reverse().map(t => `
+      <tr class="trade-row ${t.action}">
+        <td class="mono">${t.ts}</td>
+        <td>${t.exchange}</td>
+        <td class="action-cell ${t.action}">${t.action.toUpperCase()}</td>
+        <td class="mono">$${t.amount_usd.toFixed(4)}</td>
+        <td class="mono">$${t.price.toFixed(6)}</td>
+        <td class="mono">${t.qty.toFixed(8)} ${t.coin}</td>
+      </tr>`).join('');
+    tbody.innerHTML = rows;
+  }
+}
+
+async function confirmReset() {
+  if (!confirm('Reset game? This will clear ALL progress.')) return;
+  await fetch('/api/reset', { method: 'POST' });
+  location.reload();
+}
+
+profileUpdate();
+setInterval(profileUpdate, 3000);
+</script>
+{% endblock %}

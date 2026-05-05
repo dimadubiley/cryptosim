@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}CryptoSim{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/main.css"/>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="nav-logo">
+      <span class="logo-icon">◈</span>
+      <span>CRYPTOSIM</span>
+    </a>
+    <div class="nav-links">
+      <a href="/exchange/exchange1" class="nav-link ex1-link">NovaCrypt</a>
+      <a href="/exchange/exchange2" class="nav-link ex2-link">PulseX</a>
+      <a href="/exchange/exchange3" class="nav-link ex3-link">ChaosDAO</a>
+      <a href="/profile" class="nav-link profile-link">◉ Profile</a>
+    </div>
+    <div class="nav-wallet">
+      <span class="wallet-label">USD</span>
+      <span class="wallet-amount" id="nav-wallet">—</span>
+    </div>
+  </nav>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="/static/js/main.js"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

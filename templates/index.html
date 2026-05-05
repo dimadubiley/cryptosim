@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}CryptoSim — Virtual Crypto Trading{% endblock %}
+{% block content %}
+
+<div class="home-hero">
+  <div class="hero-bg-grid"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">▸ VIRTUAL TRADING SIMULATOR</div>
+    <h1 class="hero-title">
+      <span class="title-line1">CRYPTO</span>
+      <span class="title-line2">SIM</span>
+    </h1>
+    <p class="hero-desc">
+      Three independent exchanges. Three market personalities. One goal: grow your $100 into something bigger.
+      Navigate hype cycles, crashes, whale activity, and real-time chaos.
+    </p>
+    <div class="hero-stats" id="hero-stats">
+      <div class="stat-pill">
+        <span class="stat-label">YOUR BALANCE</span>
+        <span class="stat-val" id="h-balance">$100.00</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">PORTFOLIO</span>
+        <span class="stat-val" id="h-portfolio">$100.00</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">P&amp;L</span>
+        <span class="stat-val" id="h-pnl">$0.00</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="exchanges-grid">
+  {% for eid, ex in exchanges.items() %}
+  <a href="/exchange/{{ eid }}" class="exchange-card" data-eid="{{ eid }}" style="--ex-color: {{ ex.color }}">
+    <div class="card-glow"></div>
+    <div class="card-header">
+      <div class="card-badge">{{ ex.personality.upper() }}</div>
+      <div class="card-region">{{ ex.region }}</div>
+    </div>
+    <div class="card-name">{{ ex.name }}</div>
+    <div class="card-coin">{{ ex.coin }}</div>
+    <div class="card-price-wrap">
+      <div class="card-price" id="home-price-{{ eid }}">—</div>
+      <div class="card-change" id="home-change-{{ eid }}">—</div>
+    </div>
+    <div class="card-desc">{{ ex.description }}</div>
+    <div class="mini-chart-wrap">
+      <canvas class="mini-chart" id="mini-{{ eid }}" width="280" height="60"></canvas>
+    </div>
+    <div class="card-cta">TRADE NOW →</div>
+  </a>
+  {% endfor %}
+</div>
+
+<div class="how-section">
+  <h2 class="how-title">HOW TO PLAY</h2>
+  <div class="how-grid">
+    <div class="how-item">
+      <div class="how-num">01</div>
+      <div class="how-text">Start with $100 USD. Navigate to any exchange and buy crypto.</div>
+    </div>
+    <div class="how-item">
+      <div class="how-num">02</div>
+      <div class="how-text">Watch market events: hacks, hype cycles, whale activity, and weather events.</div>
+    </div>
+    <div class="how-item">
+      <div class="how-num">03</div>
+      <div class="how-text">Sell at the right time. Fees are 0.1% per trade. Track gains on your Profile.</div>
+    </div>
+    <div class="how-item">
+      <div class="how-num">04</div>
+      <div class="how-text">Each exchange has its own algorithm. What works on NovaCrypt may fail on ChaosDAO.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function homeUpdate() {
+  const [tick, state] = await Promise.all([
+    fetch('/api/tick').then(r=>r.json()),
+    fetch('/api/state').then(r=>r.json())
+  ]);
+
+  // Update nav + hero
+  document.getElementById('nav-wallet').textContent = '$' + state.wallet.toFixed(2);
+  document.getElementById('h-balance').textContent = '$' + state.wallet.toFixed(2);
+  document.getElementById('h-portfolio').textContent = '$' + state.portfolio_value.toFixed(2);
+  const pnl = state.portfolio_value - 100;
+  const pnlEl = document.getElementById('h-pnl');
+  pnlEl.textContent = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(2);
+  pnlEl.className = 'stat-val ' + (pnl > 0 ? 'up' : pnl < 0 ? 'down' : '');
+
+  // Update each exchange card
+  for (const [eid, m] of Object.entries(tick.markets)) {
+    const priceEl = document.getElementById('home-price-' + eid);
+    const changeEl = document.getElementById('home-change-' + eid);
+    if (priceEl) priceEl.textContent = '$' + m.price.toFixed(4);
+    if (changeEl) {
+      const pct = (m.change * 100).toFixed(2);
+      changeEl.textContent = (m.change >= 0 ? '▲ +' : '▼ ') + pct + '%';
+      changeEl.className = 'card-change ' + (m.change > 0.001 ? 'up' : m.change < -0.001 ? 'down' : 'flat');
+    }
+    drawMiniChart('mini-' + eid, m.history, m.change);
+  }
+}
+
+function drawMiniChart(id, data, change) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  if (data.length < 2) return;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+
+  const color = change > 0.001 ? '#00d4aa' : change < -0.001 ? '#ff4466' : '#ffd166';
+
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = (i / (data.length - 1)) * W;
+    const y = H - ((v - min) / range) * (H - 4) - 2;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Fill
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+  ctx.fillStyle = color + '22';
+  ctx.fill();
+}
+
+homeUpdate();
+setInterval(homeUpdate, 3000);
+</script>
+{% endblock %}

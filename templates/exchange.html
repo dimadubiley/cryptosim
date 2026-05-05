@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% block title %}{{ ex.name }} — CryptoSim{% endblock %}
+{% block content %}
+
+<div class="exchange-page" style="--ex-color: {{ ex.color }}">
+
+  <!-- Header -->
+  <div class="ex-header">
+    <div class="ex-meta">
+      <div class="ex-badge">{{ ex.personality.upper() }} · {{ ex.region }}</div>
+      <h1 class="ex-name">{{ ex.name }}</h1>
+      <div class="ex-desc">{{ ex.description }}</div>
+    </div>
+    <div class="ex-prices">
+      <div class="price-block">
+        <div class="price-label">LIVE PRICE</div>
+        <div class="price-value" id="live-price">—</div>
+        <div class="price-change" id="live-change">—</div>
+      </div>
+      <div class="price-block">
+        <div class="price-label">AVG (SESSION)</div>
+        <div class="price-value small" id="avg-price">—</div>
+      </div>
+      <div class="price-block">
+        <div class="price-label">DAILY OPEN</div>
+        <div class="price-value small" id="daily-open">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event Banner -->
+  <div class="event-banner" id="event-banner" style="display:none">
+    <span class="event-icon">⚡</span>
+    <span id="event-text">Market Event</span>
+    <div class="event-bar"><div class="event-bar-fill" id="event-bar-fill"></div></div>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-container">
+    <div class="chart-labels">
+      <span id="chart-max">—</span>
+      <span id="chart-mid">—</span>
+      <span id="chart-min">—</span>
+    </div>
+    <canvas id="main-chart" width="900" height="280"></canvas>
+    <div class="chart-timeline">
+      <span>80 ticks ago</span><span>NOW</span>
+    </div>
+  </div>
+
+  <!-- Trading Panel -->
+  <div class="trade-grid">
+    <div class="trade-panel">
+      <div class="panel-title">YOUR POSITION</div>
+      <div class="position-row">
+        <span>USD Balance</span>
+        <span class="pos-val" id="usd-bal">—</span>
+      </div>
+      <div class="position-row">
+        <span>{{ ex.coin }} Holdings</span>
+        <span class="pos-val" id="coin-holdings">—</span>
+      </div>
+      <div class="position-row">
+        <span>Holdings Value</span>
+        <span class="pos-val" id="holdings-val">—</span>
+      </div>
+    </div>
+
+    <div class="trade-panel buy-panel">
+      <div class="panel-title">BUY {{ ex.coin }}</div>
+      <div class="trade-input-group">
+        <label>Amount (USD)</label>
+        <input type="number" id="buy-amount" placeholder="10.00" min="0.01" step="0.01"/>
+      </div>
+      <div class="quick-amounts">
+        <button onclick="setAmt('buy-amount', 5)">$5</button>
+        <button onclick="setAmt('buy-amount', 10)">$10</button>
+        <button onclick="setAmt('buy-amount', 25)">$25</button>
+        <button onclick="setAmt('buy-amount', 50)">$50</button>
+      </div>
+      <div class="trade-est" id="buy-est">≈ — {{ ex.coin }}</div>
+      <button class="trade-btn buy-btn" onclick="doTrade('buy')">BUY NOW</button>
+    </div>
+
+    <div class="trade-panel sell-panel">
+      <div class="panel-title">SELL {{ ex.coin }}</div>
+      <div class="trade-input-group">
+        <label>Amount (USD value)</label>
+        <input type="number" id="sell-amount" placeholder="10.00" min="0.01" step="0.01"/>
+      </div>
+      <div class="quick-amounts">
+        <button onclick="setSellPct(25)">25%</button>
+        <button onclick="setSellPct(50)">50%</button>
+        <button onclick="setSellPct(75)">75%</button>
+        <button onclick="setSellPct(100)">ALL</button>
+      </div>
+      <div class="trade-est" id="sell-est">≈ — {{ ex.coin }}</div>
+      <button class="trade-btn sell-btn" onclick="doTrade('sell')">SELL NOW</button>
+    </div>
+  </div>
+
+  <!-- Trade feedback toast -->
+  <div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+const EID = '{{ eid }}';
+const COIN = '{{ ex.coin }}';
+let currentPrice = 0;
+let holdingsVal = 0;
+let priceHistory = [];
+
+// ── Chart drawing ──────────────────────────────────────────────────────────
+function drawChart(data, change) {
+  const canvas = document.getElementById('main-chart');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  if (data.length < 2) return;
+
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 0.0001;
+
+  // Color based on overall change
+  const color = change > 0.001 ? '#00d4aa' : change < -0.001 ? '#ff4466' : '#ffd166';
+  const colorDim = change > 0.001 ? '#00d4aa44' : change < -0.001 ? '#ff446644' : '#ffd16644';
+
+  // Grid lines
+  ctx.strokeStyle = '#ffffff08';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 4; i++) {
+    const y = (i / 4) * H;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, color + '55');
+  grad.addColorStop(1, color + '05');
+
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = (i / (data.length - 1)) * W;
+    const y = H - 10 - ((v - min) / range) * (H - 20);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+
+  // Fill
+  const lastX = W;
+  const lastY = H - 10 - ((data[data.length-1] - min) / range) * (H - 20);
+  ctx.lineTo(lastX, H);
+  ctx.lineTo(0, H);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = (i / (data.length - 1)) * W;
+    const y = H - 10 - ((v - min) / range) * (H - 20);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Current price dot
+  const dotX = W - 2;
+  const dotY = H - 10 - ((data[data.length-1] - min) / range) * (H - 20);
+  ctx.beginPath();
+  ctx.arc(dotX, dotY, 4, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(dotX, dotY, 8, 0, Math.PI * 2);
+  ctx.fillStyle = color + '44';
+  ctx.fill();
+
+  // Update labels
+  document.getElementById('chart-max').textContent = '$' + max.toFixed(4);
+  document.getElementById('chart-mid').textContent = '$' + ((max + min) / 2).toFixed(4);
+  document.getElementById('chart-min').textContent = '$' + min.toFixed(4);
+}
+
+// ── Tick update ────────────────────────────────────────────────────────────
+async function tickUpdate() {
+  const [tick, state] = await Promise.all([
+    fetch('/api/tick').then(r => r.json()),
+    fetch('/api/state').then(r => r.json())
+  ]);
+
+  const m = tick.markets[EID];
+  currentPrice = m.price;
+  priceHistory = m.history;
+
+  // Price display
+  document.getElementById('live-price').textContent = '$' + m.price.toFixed(6);
+  document.getElementById('avg-price').textContent = '$' + m.avg.toFixed(6);
+  document.getElementById('daily-open').textContent = '$' + m.daily_open.toFixed(6);
+  document.getElementById('nav-wallet').textContent = '$' + state.wallet.toFixed(2);
+
+  const pct = (m.change * 100).toFixed(3);
+  const changeEl = document.getElementById('live-change');
+  changeEl.textContent = (m.change >= 0 ? '▲ +' : '▼ ') + pct + '%';
+  changeEl.className = 'price-change ' + (m.change > 0.001 ? 'up' : m.change < -0.001 ? 'down' : 'flat');
+
+  // Event banner
+  const banner = document.getElementById('event-banner');
+  if (m.event) {
+    banner.style.display = 'flex';
+    document.getElementById('event-text').textContent = '⚡ ' + m.event;
+    const fill = document.getElementById('event-bar-fill');
+    fill.style.width = (m.event_ticks / 8 * 100) + '%';
+  } else {
+    banner.style.display = 'none';
+  }
+
+  // Position
+  const holdings = state.holdings[EID] || 0;
+  holdingsVal = holdings * currentPrice;
+  document.getElementById('usd-bal').textContent = '$' + state.wallet.toFixed(4);
+  document.getElementById('coin-holdings').textContent = holdings.toFixed(8) + ' ' + COIN;
+  document.getElementById('holdings-val').textContent = '$' + holdingsVal.toFixed(4);
+
+  // Update buy estimate
+  const buyAmt = parseFloat(document.getElementById('buy-amount').value) || 0;
+  document.getElementById('buy-est').textContent = '≈ ' + (buyAmt / currentPrice).toFixed(8) + ' ' + COIN;
+
+  drawChart(m.history, m.change);
+}
+
+// ── Trade functions ────────────────────────────────────────────────────────
+function setAmt(id, val) { document.getElementById(id).value = val; }
+
+function setSellPct(pct) {
+  const val = (holdingsVal * pct / 100).toFixed(2);
+  document.getElementById('sell-amount').value = val;
+}
+
+async function doTrade(action) {
+  const amtId = action === 'buy' ? 'buy-amount' : 'sell-amount';
+  const amount = parseFloat(document.getElementById(amtId).value);
+  if (!amount || amount <= 0) { showToast('Enter a valid amount', 'error'); return; }
+
+  const resp = await fetch('/api/trade', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ exchange: EID, action, amount })
+  });
+  const data = await resp.json();
+
+  if (data.ok) {
+    const t = data.trade;
+    showToast(`${action.toUpperCase()} $${t.amount_usd} of ${COIN} @ $${t.price}`, action === 'buy' ? 'buy' : 'sell');
+    document.getElementById(amtId).value = '';
+  } else {
+    showToast(data.msg, 'error');
+  }
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+document.getElementById('buy-amount').addEventListener('input', function() {
+  const amt = parseFloat(this.value) || 0;
+  document.getElementById('buy-est').textContent = currentPrice ? '≈ ' + (amt / currentPrice).toFixed(8) + ' ' + COIN : '— ';
+});
+
+tickUpdate();
+setInterval(tickUpdate, 2500);
+</script>
+{% endblock %}
