@@ -1,4 +1,41 @@
-venv/
-.idea/
+# ─── Save data ────────────────────────────────────────────────────────────────
+save_data.json
+save_data.json.tmp
+game_data.json
+game_data.json.tmp
+
+# ─── Python ───────────────────────────────────────────────────────────────────
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
 *.pyc
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ─── Virtual environment ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# ─── IDE / Editors ────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# ─── OS files ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log
